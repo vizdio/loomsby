@@ -2,6 +2,8 @@ import { useBuilderStore } from '../../features/builder/builder.store'
 import { nodeRegistry } from '../../engine/registry'
 import { ScriptEditor } from './ScriptEditor'
 import type { NodeGraph } from '../../lib/types'
+import { ImageUploader } from '../images/ImageUploader'
+import { IMAGE_CONTEXTS } from '../../lib/constants'
 
 interface GraphSidebarProps {
     graphs: NodeGraph[]
@@ -67,6 +69,32 @@ export function GraphSidebar({ graphs, onLoad }: GraphSidebarProps) {
                             onChange={(v) => patch('script', v)}
                             placeholder={`on load\n  -- write your script here\nend`}
                         />
+                    )}
+
+                    {selectedNode.type === 'lm-display' && (
+                        <div className="stack">
+                            <strong>Builder Assets</strong>
+                            <ImageUploader
+                                uploadParams={{
+                                    context: IMAGE_CONTEXTS.builder,
+                                }}
+                                onUploaded={({ image }) => {
+                                    const current =
+                                        (data['assetUrls'] as string[] | undefined) ?? []
+                                    patch('assetUrls', [image.url, ...current])
+                                }}
+                            />
+                            <div className="row gap-sm wrap">
+                                {((data['assetUrls'] as string[] | undefined) ?? []).map((url) => (
+                                    <img
+                                        key={url}
+                                        className="builder-asset-thumb"
+                                        src={url}
+                                        alt="Builder asset"
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     )}
 
                     {/* Execution output for this node */}

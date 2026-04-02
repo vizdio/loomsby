@@ -417,6 +417,15 @@ button {
     border-radius: 0 4px 4px 0;
 }
 
+.lm-node__asset,
+.builder-asset-thumb {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #d6dde4;
+}
+
 /* ─── Script editor ─────────────────────────────────────────────────────── */
 .script-editor {
     display: flex;

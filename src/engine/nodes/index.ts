@@ -76,7 +76,7 @@ nodeRegistry.register({
     color: '#3e9b6b',
     inputs: [{ id: 'value', label: 'Value', valueType: 'any' }],
     outputs: [],
-    defaultData: { label: 'Display' },
+    defaultData: { label: 'Display', assetUrls: [] },
     scriptHooks: ['receive'],
     async execute(inputs) {
         return { value: inputs['value'] ?? null }

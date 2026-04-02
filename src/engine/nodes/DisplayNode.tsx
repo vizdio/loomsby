@@ -3,6 +3,7 @@ import { useBuilderStore } from '../../features/builder/builder.store'
 
 export interface DisplayNodeData {
     label: string
+    assetUrls?: string[]
 }
 
 export function DisplayNode({ id, data, selected }: NodeProps<DisplayNodeData>) {
@@ -18,6 +19,9 @@ export function DisplayNode({ id, data, selected }: NodeProps<DisplayNodeData>) 
             </div>
             <div className="lm-node__body lm-node__body--display">
                 {inVal !== undefined && <span className="lm-node__value">{String(inVal)}</span>}
+                {(data.assetUrls ?? []).map((url) => (
+                    <img key={url} className="lm-node__asset" src={url} alt="Display asset" />
+                ))}
                 {lines.map((line, i) => (
                     <div key={i} className="lm-node__output-line">
                         {line}
