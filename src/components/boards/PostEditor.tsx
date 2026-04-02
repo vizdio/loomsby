@@ -11,9 +11,11 @@ type PostInput = z.infer<typeof postSchema>
 
 export function PostEditor({
     boardId,
+    boardImagesPrivate,
     onSubmitPost,
 }: {
     boardId: string
+    boardImagesPrivate: boolean
     onSubmitPost: (input: PostInput & { imageIds: string[] }) => Promise<void>
 }) {
     const [attachments, setAttachments] = useState<ImageRecord[]>([])
@@ -43,7 +45,7 @@ export function PostEditor({
                 uploadParams={{
                     context: IMAGE_CONTEXTS.board,
                     boardId,
-                    makePublic: true,
+                    makePublic: !boardImagesPrivate,
                 }}
                 onUploaded={(result) => {
                     setAttachments((current) => [result.image, ...current])

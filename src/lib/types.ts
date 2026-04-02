@@ -36,6 +36,7 @@ export interface Board {
     title: string
     description: string | null
     is_locked: boolean
+    images_private?: boolean
     created_at: string
 }
 

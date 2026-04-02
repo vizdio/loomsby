@@ -11,6 +11,16 @@ async function listBoards(): Promise<Board[]> {
     return (data ?? []) as Board[]
 }
 
+async function getBoard(boardId: string): Promise<Board | null> {
+    const { data, error } = await supabase
+        .from('boards')
+        .select('*')
+        .eq('id', boardId)
+        .maybeSingle()
+    if (error) throw error
+    return (data as Board | null) ?? null
+}
+
 async function listPosts(boardId: string): Promise<Post[]> {
     const { data, error } = await supabase
         .from('posts')
@@ -76,6 +86,7 @@ async function createComment(postId: string, content_md: string): Promise<void> 
 
 export const boardsApi = {
     listBoards,
+    getBoard,
     listPosts,
     createPost,
     moderatePost,

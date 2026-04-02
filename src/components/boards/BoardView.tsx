@@ -17,6 +17,12 @@ export function BoardView({ boardId }: { boardId: string | null }) {
         enabled: Boolean(boardId),
     })
 
+    const { data: board } = useQuery({
+        queryKey: ['board', boardId],
+        queryFn: () => boardsApi.getBoard(boardId ?? ''),
+        enabled: Boolean(boardId),
+    })
+
     useRealtimeChannel(
         () =>
             supabase.channel(`board:${boardId ?? 'none'}`).on(
@@ -49,6 +55,7 @@ export function BoardView({ boardId }: { boardId: string | null }) {
         <section className="stack">
             <PostEditor
                 boardId={boardId}
+                boardImagesPrivate={Boolean(board?.images_private)}
                 onSubmitPost={async ({ title, content_md, imageIds }) => {
                     await boardsApi.createPost(boardId, title, content_md, imageIds)
                     await refetch()
