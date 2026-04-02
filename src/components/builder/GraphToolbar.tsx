@@ -1,3 +1,5 @@
+import { BuilderHelpButton } from './BuilderHelp'
+
 interface GraphToolbarProps {
     onExecute: () => void
     onSave: () => void
@@ -9,6 +11,8 @@ interface GraphToolbarProps {
 export function GraphToolbar({ onExecute, onSave, onUndo, onRedo, isRunning }: GraphToolbarProps) {
     return (
         <div className="row gap-sm builder-toolbar">
+            <BuilderHelpButton />
+            <span className="toolbar-separator" />
             <button className="btn-secondary" onClick={onUndo} title="Undo (Ctrl+Z)">
                 ↩ Undo
             </button>
