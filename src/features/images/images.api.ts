@@ -105,6 +105,7 @@ async function uploadImage(params: UploadImageParams): Promise<ImageUploadResult
 
     if (imageInsertError) {
         await supabase.storage.from(bucket).remove([path])
+
         throw imageInsertError
     }
 
@@ -142,10 +143,38 @@ async function attachImagesToPost(postId: string, imageIds: string[]): Promise<v
     if (error) throw error
 }
 
+async function listMyImagesByContext(context: ImageContext): Promise<ImageRecord[]> {
+    const { data: authData } = await supabase.auth.getUser()
+    const userId = authData.user?.id
+    if (!userId) return []
+
+    const { data, error } = await supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('context', context)
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    const images = (data ?? []) as ImageRecord[]
+
+    // Private buckets require fresh signed URLs after navigation/refresh.
+    const refreshed = await Promise.all(
+        images.map(async (image) => {
+            const url = await refreshSignedUrl({ bucket: image.bucket, path: image.path })
+            return { ...image, url }
+        }),
+    )
+
+    return refreshed
+}
+
 export const imagesApi = {
     uploadImage,
     deleteImage,
     refreshSignedUrl,
+    listMyImagesByContext,
     attachImageToChatMessage,
     attachImagesToPost,
     MAX_FILE_SIZE_BYTES,

@@ -1,7 +1,7 @@
 create table if not exists public.images (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
-  bucket text not null check (bucket in ('user-images', 'board-images', 'chat-images', 'builder-assets')),
+  bucket text not null,
   path text not null,
   url text not null,
   thumbnail_url text,
@@ -13,6 +13,13 @@ create table if not exists public.images (
   node_graph_id uuid references public.node_graphs (id) on delete cascade,
   created_at timestamptz not null default now()
 );
+
+alter table public.images
+  drop constraint if exists images_bucket_check;
+
+alter table public.images
+  add constraint images_bucket_check
+  check (bucket in ('user-images', 'board-images', 'chat-images', 'builder-assets'));
 
 create table if not exists public.post_images (
   post_id uuid not null references public.posts (id) on delete cascade,

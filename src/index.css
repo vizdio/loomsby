@@ -262,6 +262,22 @@ button {
     background: transparent;
 }
 
+.image-tile-wrap {
+    position: relative;
+}
+
+.image-delete-btn {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    padding: 0.18rem 0.45rem;
+    font-size: 0.72rem;
+    border-radius: 999px;
+    background: rgba(187, 45, 59, 0.92);
+    border-color: #92212c;
+    color: #fff;
+}
+
 .image-tile img {
     width: 100%;
     aspect-ratio: 1 / 1;
