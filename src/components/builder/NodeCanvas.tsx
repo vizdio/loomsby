@@ -1,75 +1,111 @@
+import React, { useCallback } from 'react'
 import {
     addEdge,
+    applyEdgeChanges,
+    applyNodeChanges,
     Background,
     Controls,
     MiniMap,
     ReactFlow,
     type Connection,
     type Edge,
+    type EdgeChange,
     type Node,
-    useEdgesState,
-    useNodesState,
+    type NodeChange,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
 import { builderApi } from '../../features/builder/builder.api'
-import { executeFlow } from '../../features/builder/flow.exec'
+import { executeGraph } from '../../engine/graphEngine'
+import { nodeTypes } from '../../engine/nodes/index'
+import { nodeRegistry } from '../../engine/registry'
+import { useBuilderStore } from '../../features/builder/builder.store'
 import { GraphToolbar } from './GraphToolbar'
 import { NodePalette } from './NodePalette'
 import { GraphSidebar } from './GraphSidebar'
-import { EdgeConnector } from './EdgeConnector'
 import type { NodeGraph } from '../../lib/types'
 
-const initialNodes: Node[] = [
-    {
-        id: 'input-1',
-        type: 'input',
-        position: { x: 100, y: 80 },
-        data: { label: 'Input', value: 'hello' },
-    },
-    { id: 'logic-1', type: 'default', position: { x: 320, y: 150 }, data: { label: 'Logic' } },
-    { id: 'output-1', type: 'output', position: { x: 560, y: 220 }, data: { label: 'Output' } },
-]
-
 export function NodeCanvas() {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-    const [runtimeOutput, setRuntimeOutput] = useState<Record<string, unknown>>({})
+    const {
+        nodes,
+        edges,
+        setNodes,
+        setEdges,
+        selectNode,
+        pushHistory,
+        undo,
+        redo,
+        isRunning,
+        setRunning,
+        setExecutionResult,
+    } = useBuilderStore()
 
     const { data: graphs = [], refetch } = useQuery({
         queryKey: ['node-graphs'],
         queryFn: builderApi.listGraphs,
     })
 
-    const flowView = useMemo(() => ({ nodes, edges }), [nodes, edges])
+    const onNodesChange = useCallback(
+        (changes: NodeChange[]) => setNodes(applyNodeChanges(changes, nodes)),
+        [nodes, setNodes],
+    )
 
-    const onConnect = (connection: Edge | Connection) => {
-        setEdges((currentEdges) => addEdge(connection, currentEdges))
-    }
+    const onEdgesChange = useCallback(
+        (changes: EdgeChange[]) => setEdges(applyEdgeChanges(changes, edges)),
+        [edges, setEdges],
+    )
+
+    const onConnect = useCallback(
+        (connection: Connection | Edge) => {
+            pushHistory()
+            setEdges(addEdge(connection, edges))
+        },
+        [edges, setEdges, pushHistory],
+    )
+
+    const onNodeClick = useCallback(
+        (_: React.MouseEvent, node: Node) => selectNode(node.id),
+        [selectNode],
+    )
+
+    const onPaneClick = useCallback(() => selectNode(null), [selectNode])
 
     const addNode = (type: string) => {
+        pushHistory()
+        const def = nodeRegistry.get(type)
         const id = `${type}-${crypto.randomUUID().slice(0, 6)}`
-        setNodes((current) => [
-            ...current,
+        setNodes([
+            ...nodes,
             {
                 id,
-                type: type === 'logic' ? 'default' : type,
-                position: { x: 140 + current.length * 24, y: 100 + current.length * 20 },
-                data: { label: `${type} node` },
+                type,
+                position: { x: 160 + nodes.length * 28, y: 120 + nodes.length * 22 },
+                data: { ...(def?.defaultData ?? { label: type }) },
             },
         ])
     }
 
+    const onExecute = async () => {
+        setRunning(true)
+        setExecutionResult(null)
+        try {
+            const result = await executeGraph(nodes, edges)
+            setExecutionResult(result)
+        } finally {
+            setRunning(false)
+        }
+    }
+
     const saveGraph = async () => {
         await builderApi.saveGraph('Untitled Graph', {
-            nodes: flowView.nodes as unknown as NodeGraph['graph']['nodes'],
-            edges: flowView.edges as unknown as NodeGraph['graph']['edges'],
+            nodes: nodes as unknown as NodeGraph['graph']['nodes'],
+            edges: edges as unknown as NodeGraph['graph']['edges'],
         })
         await refetch()
     }
 
     const loadGraph = (graph: NodeGraph) => {
+        pushHistory()
         setNodes(graph.graph.nodes as unknown as Node[])
         setEdges(graph.graph.edges as unknown as Edge[])
     }
@@ -77,24 +113,28 @@ export function NodeCanvas() {
     return (
         <section className="builder-layout">
             <NodePalette onAdd={addNode} />
-            <div className="stack card">
+            <div className="builder-main">
                 <GraphToolbar
                     onExecute={() => {
-                        const result = executeFlow(nodes, edges)
-                        setRuntimeOutput(result.output)
+                        void onExecute()
                     }}
                     onSave={() => {
                         void saveGraph()
                     }}
+                    onUndo={undo}
+                    onRedo={redo}
+                    isRunning={isRunning}
                 />
-                <EdgeConnector />
                 <div className="canvas-wrap">
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}
+                        nodeTypes={nodeTypes}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnect}
+                        onNodeClick={onNodeClick}
+                        onPaneClick={onPaneClick}
                         fitView
                     >
                         <MiniMap />
@@ -102,7 +142,6 @@ export function NodeCanvas() {
                         <Background />
                     </ReactFlow>
                 </div>
-                <pre className="runtime-output">{JSON.stringify(runtimeOutput, null, 2)}</pre>
             </div>
             <GraphSidebar graphs={graphs} onLoad={loadGraph} />
         </section>
