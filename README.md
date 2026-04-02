@@ -36,8 +36,8 @@ Loomsby is a modular React + Supabase platform scaffold with:
 2. Copy env file:
    cp .env.example .env
 3. Fill in:
-   - VITE_SUPABASE_URL
-   - VITE_SUPABASE_ANON_KEY
+    - VITE_SUPABASE_URL
+    - VITE_SUPABASE_ANON_KEY
 4. Apply SQL migration from:
    supabase/migrations/20260401_loomsby_mvp.sql
 5. Run dev server:

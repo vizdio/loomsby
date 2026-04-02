@@ -3,11 +3,11 @@ import { useMemo, type ReactNode } from 'react'
 import { AuthProvider } from './AuthProvider'
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const queryClient = useMemo(() => new QueryClient(), [])
+    const queryClient = useMemo(() => new QueryClient(), [])
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
-    </QueryClientProvider>
-  )
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>{children}</AuthProvider>
+        </QueryClientProvider>
+    )
 }

@@ -7,12 +7,15 @@
 5. Optional: create an Edge Function for image thumbnail generation.
 
 ## Realtime
+
 Enable replication for tables:
+
 - `posts`
 - `chat_messages`
 - `chat_typing`
 
 ## Security Notes
+
 - RLS is enabled on all app tables.
 - Write policies are scoped to `auth.uid()`.
 - Chat read access is restricted to thread participants.

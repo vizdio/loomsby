@@ -6,11 +6,11 @@ import App from './App'
 import { AppProviders } from './providers/AppProviders'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AppProviders>
-        <App />
-      </AppProviders>
-    </BrowserRouter>
-  </StrictMode>,
+    <StrictMode>
+        <BrowserRouter>
+            <AppProviders>
+                <App />
+            </AppProviders>
+        </BrowserRouter>
+    </StrictMode>,
 )
