@@ -37,6 +37,15 @@ export const NODE_TYPES = {
 } as const
 
 export const STORAGE_BUCKETS = {
-    avatars: 'avatars',
-    media: 'media',
+    userImages: 'user-images',
+    boardImages: 'board-images',
+    chatImages: 'chat-images',
+    builderAssets: 'builder-assets',
+} as const
+
+export const IMAGE_CONTEXTS = {
+    chat: 'chat',
+    board: 'board',
+    profile: 'profile',
+    builder: 'builder',
 } as const

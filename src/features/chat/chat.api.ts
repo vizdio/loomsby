@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import type { ChatMessage, ChatThread } from '../../lib/types'
+import { imagesApi } from '../images/images.api'
 
 async function listThreads(userId: string): Promise<ChatThread[]> {
     const { data, error } = await supabase
@@ -14,17 +15,35 @@ async function listThreads(userId: string): Promise<ChatThread[]> {
 async function listMessages(threadId: string): Promise<ChatMessage[]> {
     const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('*, image:images(*)')
         .eq('thread_id', threadId)
         .order('created_at', { ascending: true })
     if (error) throw error
-    return (data ?? []) as ChatMessage[]
+
+    const messages = (data ?? []) as ChatMessage[]
+    for (const message of messages) {
+        if (message.image && message.image.bucket && message.image.path) {
+            message.image.url = await imagesApi.refreshSignedUrl({
+                bucket: message.image.bucket,
+                path: message.image.path,
+            })
+        }
+    }
+    return messages
 }
 
-async function sendMessage(threadId: string, content: string, image_url?: string): Promise<void> {
-    const { error } = await supabase
-        .from('chat_messages')
-        .insert({ thread_id: threadId, content, image_url: image_url ?? null })
+async function sendMessage(
+    threadId: string,
+    content: string,
+    imageId?: string,
+    imageUrl?: string,
+): Promise<void> {
+    const { error } = await supabase.from('chat_messages').insert({
+        thread_id: threadId,
+        content,
+        image_id: imageId ?? null,
+        image_url: imageUrl ?? null,
+    })
     if (error) throw error
 }
 

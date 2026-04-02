@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
-import type { Board, Comment, Post } from '../../lib/types'
+import type { Board, Comment, ImageRecord, Post } from '../../lib/types'
+import { imagesApi } from '../images/images.api'
 
 async function listBoards(): Promise<Board[]> {
     const { data, error } = await supabase
@@ -13,24 +14,37 @@ async function listBoards(): Promise<Board[]> {
 async function listPosts(boardId: string): Promise<Post[]> {
     const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select('*, post_images(image_id, images(*))')
         .eq('board_id', boardId)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
     if (error) throw error
-    return (data ?? []) as Post[]
+    return (data ?? []).map((post) => {
+        const postWithRelations = post as Post & {
+            post_images?: Array<{ image_id: string; images?: ImageRecord }>
+        }
+        return {
+            ...postWithRelations,
+            images: (postWithRelations.post_images ?? []).map((row) => row.images).filter(Boolean),
+        }
+    }) as Post[]
 }
 
 async function createPost(
     boardId: string,
     title: string,
     content_md: string,
-    image_url?: string,
-): Promise<void> {
-    const { error } = await supabase
+    imageIds: string[] = [],
+): Promise<string> {
+    const { data, error } = await supabase
         .from('posts')
-        .insert({ board_id: boardId, title, content_md, image_url: image_url ?? null })
+        .insert({ board_id: boardId, title, content_md, image_url: null })
+        .select('id')
+        .single()
     if (error) throw error
+
+    await imagesApi.attachImagesToPost(data.id, imageIds)
+    return data.id
 }
 
 async function moderatePost(postId: string, action: 'delete' | 'pin' | 'lock'): Promise<void> {

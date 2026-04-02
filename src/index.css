@@ -199,6 +199,63 @@ button {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 }
 
+.image-upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    border: 2px dashed #c7d0d9;
+    background: #fafcfe;
+    color: #223548;
+    padding: 1rem;
+    text-align: left;
+}
+
+.image-upload-dropzone.dragging {
+    border-color: #1f6feb;
+    background: #eef5ff;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.upload-progress {
+    height: 8px;
+    border-radius: 999px;
+    background: #e7edf3;
+    overflow: hidden;
+}
+
+.upload-progress__bar {
+    height: 100%;
+    background: #1f6feb;
+    transition: width 0.2s ease;
+}
+
+.image-attachment {
+    border: 1px solid #d6dde4;
+    background: #fff;
+    border-radius: 10px;
+    padding: 0;
+}
+
+.image-attachment__thumb,
+.media-thumb {
+    width: 92px;
+    height: 92px;
+    object-fit: cover;
+    display: block;
+    border-radius: 8px;
+}
+
 .image-tile {
     padding: 0;
     border: 1px solid #d6dde4;
@@ -225,6 +282,16 @@ button {
     max-width: min(960px, 95vw);
     max-height: 80vh;
     border-radius: 12px;
+    transition: transform 0.2s ease;
+}
+
+.lightbox-controls {
+    position: absolute;
+    top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .builder-layout {

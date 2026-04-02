@@ -2,10 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { chatApi } from '../../features/chat/chat.api'
 import { useRealtimeChannel } from '../../hooks/useRealtimeChannel'
-import { messageSchema } from '../../lib/validators'
 import { MessageBubble } from './MessageBubble'
 import { z } from 'zod'
 import { supabase } from '../../lib/supabase'
+import { ImageUploader } from '../images/ImageUploader'
+import { IMAGE_CONTEXTS } from '../../lib/constants'
+import type { ImageRecord } from '../../lib/types'
+import { ImageLightbox } from '../images/ImageLightbox'
 
 const typingSchema = z.object({ content: z.string().optional() })
 
@@ -17,6 +20,8 @@ interface ChatWindowProps {
 export function ChatWindow({ threadId, userId }: ChatWindowProps) {
     const [draft, setDraft] = useState('')
     const [peerTyping, setPeerTyping] = useState(false)
+    const [pendingImage, setPendingImage] = useState<ImageRecord | null>(null)
+    const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
 
     const { data, refetch } = useQuery({
         queryKey: ['messages', threadId],
@@ -61,18 +66,48 @@ export function ChatWindow({ threadId, userId }: ChatWindowProps) {
                         key={message.id}
                         message={message}
                         isMine={message.sender_id === userId}
+                        onOpenImage={setSelectedImageId}
                     />
                 ))}
             </div>
+
+            <ImageUploader
+                uploadParams={{ context: IMAGE_CONTEXTS.chat, threadId }}
+                onUploaded={(result) => {
+                    setPendingImage(result.image)
+                }}
+            />
+            {pendingImage && (
+                <div className="row gap-sm wrap">
+                    <img
+                        className="media-thumb"
+                        src={pendingImage.url}
+                        alt="Pending chat attachment"
+                    />
+                    <button
+                        className="btn-secondary"
+                        onClick={() => setPendingImage(null)}
+                        type="button"
+                    >
+                        Remove attachment
+                    </button>
+                </div>
+            )}
+
             {peerTyping && <p className="muted-text">Typing...</p>}
             <form
                 className="row gap-sm"
                 onSubmit={async (event) => {
                     event.preventDefault()
-                    const parsed = messageSchema.safeParse({ content: draft })
-                    if (!parsed.success) return
-                    await chatApi.sendMessage(threadId, parsed.data.content)
+                    if (!draft.trim() && !pendingImage) return
+                    await chatApi.sendMessage(
+                        threadId,
+                        draft.trim(),
+                        pendingImage?.id,
+                        pendingImage?.url,
+                    )
                     setDraft('')
+                    setPendingImage(null)
                     await chatApi.markThreadRead(threadId)
                     await refetch()
                 }}
@@ -91,6 +126,14 @@ export function ChatWindow({ threadId, userId }: ChatWindowProps) {
                 />
                 <button type="submit">Send</button>
             </form>
+
+            <ImageLightbox
+                images={(data ?? [])
+                    .map((m) => m.image)
+                    .filter((image): image is ImageRecord => Boolean(image))}
+                selectedId={selectedImageId}
+                onClose={() => setSelectedImageId(null)}
+            />
         </section>
     )
 }
